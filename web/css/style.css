@@ -1,0 +1,25 @@
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+.card {
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.estrellas {
+    color: #ffc107;
+}
+
+.bg-game {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
