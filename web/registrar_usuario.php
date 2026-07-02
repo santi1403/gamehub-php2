@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($e->getCode() == 23505) {
                 $errores['email'] = 'El correo ya esta registrado.';
             } else {
-                $errores['db'] = 'Error al registrar. Intentalo de nuevo.';
+                $errores['db'] = 'Error SQL: ' . $e->getMessage();
             }
         }
     }

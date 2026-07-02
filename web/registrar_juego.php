@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $exito = 'Videojuego "' . htmlspecialchars($titulo) . '" registrado exitosamente.';
             $valores = ['titulo' => '', 'genero' => '', 'plataforma' => '', 'descripcion' => '', 'precio' => '', 'anio_lanzamiento' => ''];
         } catch (PDOException $e) {
-            $errores['db'] = 'Error al guardar en la base de datos.';
+            $errores['db'] = 'Error SQL: ' . $e->getMessage();
         }
     }
 }
