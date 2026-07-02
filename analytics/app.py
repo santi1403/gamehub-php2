@@ -197,14 +197,7 @@ def api_videojuegos():
             v['_id'] = str(v['_id'])
 
         if not es_api():
-            html = HTML_HEADER + '''
-                <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/" class="text-info">Dashboard</a></li><li class="breadcrumb-item active text-light">Videojuegos (JSON)</li></ol></nav>
-                <div class="card bg-dark text-light"><div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);"><h5 class="mb-0">Videojuegos Registrados</h5></div>
-                <div class="card-body"><pre class="text-light mb-0" style="font-size:13px;">'''
-            import json
-            html += json.dumps(videojuegos, indent=2, ensure_ascii=False)
-            html += '</pre></div></div>'
-            return html + HTML_FOOTER
+            return index()
 
         return jsonify(videojuegos)
 
@@ -270,15 +263,7 @@ def api_estadisticas():
     stats = resultado[0] if resultado else {'total_resenas': 0, 'promedio': 0, 'mejor': 0, 'peor': 0}
 
     if not es_api():
-        import json
-        html = HTML_HEADER + f'''
-            <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/" class="text-info">Dashboard</a></li><li class="breadcrumb-item active text-light">Estadisticas (JSON)</li></ol></nav>
-            <div class="card bg-dark text-light"><div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);"><h5 class="mb-0">Estadisticas de: {juego.get('nombre', 'Desconocido')}</h5></div>
-            <div class="card-body"><pre class="text-light mb-0" style="font-size:13px;">'''
-        data = {'id_videojuego': id_videojuego, 'nombre': juego.get('nombre', ''), 'genero': juego.get('genero', ''), 'total_resenas': stats['total_resenas'], 'promedio': round(stats['promedio'], 1), 'mejor_calificacion': stats['mejor'], 'peor_calificacion': stats['peor']}
-        html += json.dumps(data, indent=2, ensure_ascii=False)
-        html += '</pre></div></div>'
-        return html + HTML_FOOTER
+        return pagina_estadisticas()
 
     return jsonify({
         'id_videojuego': id_videojuego, 'nombre': juego.get('nombre', ''), 'genero': juego.get('genero', ''),
@@ -407,14 +392,7 @@ def api_mejores():
         top.append({'id_videojuego': item['_id'], 'nombre': juego['nombre'] if juego else 'Desconocido', 'genero': juego['genero'] if juego else '', 'total_resenas': item['total_resenas'], 'promedio': round(item['promedio'], 1)})
 
     if not es_api():
-        import json
-        html = HTML_HEADER + '''
-            <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/" class="text-info">Dashboard</a></li><li class="breadcrumb-item active text-light">Mejores (JSON)</li></ol></nav>
-            <div class="card bg-dark text-light"><div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);"><h5 class="mb-0">Mejores Videojuegos</h5></div>
-            <div class="card-body"><pre class="text-light mb-0" style="font-size:13px;">'''
-        html += json.dumps({'mejores_videojuegos': top}, indent=2, ensure_ascii=False)
-        html += '</pre></div></div>'
-        return html + HTML_FOOTER
+        return pagina_mejores()
 
     return jsonify({'mejores_videojuegos': top})
 
