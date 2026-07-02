@@ -4,6 +4,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
+    edad INTEGER,
+    telefono VARCHAR(20),
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -13,6 +15,8 @@ CREATE TABLE IF NOT EXISTS videojuegos (
     genero VARCHAR(100) NOT NULL,
     plataforma VARCHAR(100) NOT NULL,
     descripcion TEXT,
+    precio DECIMAL(10,2) DEFAULT 0,
+    anio_lanzamiento INTEGER,
     calificacion_promedio DECIMAL(3,1) DEFAULT 0,
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

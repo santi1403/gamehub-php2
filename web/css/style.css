@@ -2,24 +2,79 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    background: linear-gradient(135deg, #0a0e27 0%, #121a3a 100%);
 }
 
 main {
     flex: 1;
 }
 
+.navbar {
+    background: linear-gradient(90deg, #003087 0%, #0070CC 100%) !important;
+}
+
 .card {
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(0, 112, 204, 0.3) !important;
 }
 
 .card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 112, 204, 0.3) !important;
 }
 
 .estrellas {
-    color: #ffc107;
+    color: #FFD700;
 }
 
 .bg-game {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    background: linear-gradient(135deg, #003087 0%, #0070CC 100%);
+}
+
+.btn-primary-play {
+    background: linear-gradient(90deg, #003087 0%, #0070CC 100%);
+    border: none;
+    color: white;
+}
+
+.btn-primary-play:hover {
+    background: linear-gradient(90deg, #0052b3 0%, #0088ff 100%);
+    color: white;
+}
+
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.star-rating {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 5px;
+}
+
+.star-rating input {
+    display: none;
+}
+
+.star-rating label {
+    font-size: 2rem;
+    color: #6c757d;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.star-rating label:hover,
+.star-rating label:hover ~ label,
+.star-rating input:checked ~ label {
+    color: #FFD700;
+}
+
+.star-rating label:hover {
+    transform: scale(1.2);
+}
+
+.border-blue {
+    border-color: rgba(0, 112, 204, 0.5) !important;
 }
