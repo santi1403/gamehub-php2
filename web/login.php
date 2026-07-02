@@ -1,6 +1,5 @@
 <?php
 require_once 'db.php';
-include 'header.php';
 
 $error = '';
 
@@ -15,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $usuario = $stmt->fetch();
 
         if ($usuario) {
+            session_start();
             $_SESSION['usuario_id'] = $usuario['id'];
             $_SESSION['usuario_nombre'] = $usuario['nombre'];
             header('Location: index.php');
@@ -24,6 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+include 'header.php';
 ?>
 
 <div class="container">
