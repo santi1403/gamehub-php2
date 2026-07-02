@@ -17,9 +17,14 @@ except PyMongoError as e:
     mongo_error = str(e)
 
 
-def es_navegador():
+def es_api():
+    """Retorna True si quien llama es PHP/cURL (quiere JSON), False si es navegador"""
     accept = request.headers.get('Accept', '')
-    return 'text/html' in accept
+    if 'application/json' in accept:
+        return True
+    if 'text/html' in accept or request.args.get('html'):
+        return False
+    return True
 
 
 HTML_HEADER = '''<!DOCTYPE html>
@@ -185,13 +190,13 @@ def index():
 def api_videojuegos():
     if request.method == 'GET':
         if db is None:
-            return jsonify({'error': 'Servicio no disponible'}), 503 if not es_navegador() else (HTML_HEADER + '<div class="alert alert-danger text-center py-5"><h4>Error de conexion</h4></div>' + HTML_FOOTER)
+            return jsonify({'error': 'Servicio no disponible'}), 503 if not es_api() else (HTML_HEADER + '<div class="alert alert-danger text-center py-5"><h4>Error de conexion</h4></div>' + HTML_FOOTER)
 
         videojuegos = list(db.videojuegos.find().sort('fecha_registro', -1))
         for v in videojuegos:
             v['_id'] = str(v['_id'])
 
-        if es_navegador():
+        if not es_api():
             html = HTML_HEADER + '''
                 <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/" class="text-info">Dashboard</a></li><li class="breadcrumb-item active text-light">Videojuegos (JSON)</li></ol></nav>
                 <div class="card bg-dark text-light"><div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);"><h5 class="mb-0">Videojuegos Registrados</h5></div>
@@ -241,7 +246,7 @@ def api_estadisticas():
 
     juego = db.videojuegos.find_one({'id_videojuego': id_videojuego})
     if not juego:
-        if es_navegador():
+        if not es_api():
             return HTML_HEADER + f'''
                 <div class="row justify-content-center mt-5">
                     <div class="col-md-6">
@@ -264,7 +269,7 @@ def api_estadisticas():
     resultado = list(db.reportes_resenas.aggregate(pipeline))
     stats = resultado[0] if resultado else {'total_resenas': 0, 'promedio': 0, 'mejor': 0, 'peor': 0}
 
-    if es_navegador():
+    if not es_api():
         import json
         html = HTML_HEADER + f'''
             <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/" class="text-info">Dashboard</a></li><li class="breadcrumb-item active text-light">Estadisticas (JSON)</li></ol></nav>
@@ -401,7 +406,7 @@ def api_mejores():
         juego = db.videojuegos.find_one({'id_videojuego': item['_id']})
         top.append({'id_videojuego': item['_id'], 'nombre': juego['nombre'] if juego else 'Desconocido', 'genero': juego['genero'] if juego else '', 'total_resenas': item['total_resenas'], 'promedio': round(item['promedio'], 1)})
 
-    if es_navegador():
+    if not es_api():
         import json
         html = HTML_HEADER + '''
             <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/" class="text-info">Dashboard</a></li><li class="breadcrumb-item active text-light">Mejores (JSON)</li></ol></nav>
