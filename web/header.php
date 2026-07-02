@@ -39,6 +39,9 @@ session_start();
                         </li>
                     <?php else: ?>
                         <li class="nav-item">
+                            <a class="nav-link" href="login.php"><i class="bi bi-box-arrow-in-right"></i> Iniciar Sesion</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="registrar_usuario.php"><i class="bi bi-person-plus"></i> Registrarse</a>
                         </li>
                     <?php endif; ?>

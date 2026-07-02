@@ -58,8 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['usuario_id'] = $pdo->lastInsertId();
             $_SESSION['usuario_nombre'] = $nombre;
 
-            $exito = 'Registro exitoso. Bienvenido, ' . htmlspecialchars($nombre) . '.';
-            header('Refresh: 2; URL=index.php');
+            $exito = 'Registro exitoso. Bienvenido, ' . htmlspecialchars($nombre) . '. <a href="index.php" class="text-white fw-bold">Ir al inicio</a>';
         } catch (PDOException $e) {
             if ($e->getCode() == 23505) {
                 $errores['email'] = 'El correo ya esta registrado.';
