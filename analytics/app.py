@@ -21,10 +21,16 @@ except PyMongoError as e:
 def index():
     if db is not None:
         return jsonify({'servicio': 'GameHub - API de Analitica', 'estado': 'conectado'})
+
+    hint = ''
+    if 'bad auth' in str(mongo_error).lower() or 'authentication failed' in str(mongo_error).lower():
+        hint = 'Verifica que MONGO_URI tenga usuario y password correctos en las variables de entorno de Render'
+
     return jsonify({
         'servicio': 'GameHub - API de Analitica',
         'estado': 'error: sin conexion a MongoDB',
-        'detalle': mongo_error
+        'detalle': mongo_error,
+        'ayuda': hint
     })
 
 
