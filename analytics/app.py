@@ -17,6 +17,11 @@ except PyMongoError as e:
     mongo_error = str(e)
 
 
+def es_navegador():
+    accept = request.headers.get('Accept', '')
+    return 'text/html' in accept
+
+
 HTML_HEADER = '''<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -77,16 +82,16 @@ def index():
 
     total_resenas = db.reportes_resenas.count_documents({})
 
-    html = HTML_HEADER + '''
+    html = HTML_HEADER + f'''
         <div class="row g-4 mb-4">
             <div class="col-md-4">
-                <div class="card bg-dark text-light text-center p-3"><h1 class="text-info">''' + str(len(videojuegos)) + '''</h1><p>Videojuegos</p></div>
+                <div class="card bg-dark text-light text-center p-3"><h1 class="text-info">{len(videojuegos)}</h1><p>Videojuegos registrados</p></div>
             </div>
             <div class="col-md-4">
-                <div class="card bg-dark text-light text-center p-3"><h1 class="text-info">''' + str(total_resenas) + '''</h1><p>Reseñas Totales</p></div>
+                <div class="card bg-dark text-light text-center p-3"><h1 class="text-info">{total_resenas}</h1><p>Resenas totales</p></div>
             </div>
             <div class="col-md-4">
-                <div class="card bg-dark text-light text-center p-3"><h1 class="text-info">''' + str(len(top)) + '''</h1><p>Top Calificados</p></div>
+                <div class="card bg-dark text-light text-center p-3"><h1 class="text-info">{len(top)}</h1><p>Top calificados</p></div>
             </div>
         </div>
 
@@ -100,19 +105,19 @@ def index():
 
     if top:
         html += '''<table class="table table-dark table-striped mb-0">
-                <thead><tr><th>#</th><th>Videojuego</th><th>Genero</th><th>Reseñas</th><th>Promedio</th></tr></thead><tbody>'''
+                <thead><tr><th>#</th><th>Videojuego</th><th>Genero</th><th>Resenas</th><th>Promedio</th></tr></thead><tbody>'''
         for i, t in enumerate(top, 1):
             estrellas = ''.join(['<i class="bi bi-star-fill"></i>' if j <= round(t['promedio']) else '<i class="bi bi-star"></i>' for j in range(1, 6)])
-            html += f'''<tr><td>{i}</td><td>{t['nombre']}</td><td>{t['genero']}</td><td>{t['total_resenas']}</td><td><span class="estrellas">{estrellas}</span> {t['promedio']}</td></tr>'''
+            html += f'''<tr><td>{i}</td><td>{t['nombre']}</td><td><span class="badge bg-primary">{t['genero']}</span></td><td>{t['total_resenas']}</td><td><span class="estrellas">{estrellas}</span> {t['promedio']}</td></tr>'''
         html += '</tbody></table>'
     else:
-        html += '<div class="p-4 text-center text-muted">No hay datos aun. Registra juegos y reseñas en la app principal.</div>'
+        html += '<div class="p-4 text-center text-muted"><i class="bi bi-inbox fs-1"></i><p class="mt-2">Sin calificaciones. Escribe reseñas en la app principal.</p></div>'
 
     html += '''</div></div>
             <div class="col-lg-6">
                 <div class="card bg-dark text-light">
                     <div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);">
-                        <h5 class="mb-0"><i class="bi bi-list-ul"></i> Videojuegos Registrados</h5>
+                        <h5 class="mb-0"><i class="bi bi-list-ul"></i> Videojuegos en Analitica</h5>
                     </div>
                     <div class="card-body p-0">'''
 
@@ -124,50 +129,50 @@ def index():
                 <td><a href="/estadisticas?id={v['id_videojuego']}" class="btn btn-sm btn-outline-info">Ver Stats</a></td></tr>'''
         html += '</tbody></table>'
     else:
-        html += '<div class="p-4 text-center text-muted">No hay videojuegos registrados en analitica.</div>'
+        html += '<div class="p-4 text-center text-muted"><i class="bi bi-inbox fs-1"></i><p class="mt-2">Sin juegos. Sincronizalos abajo.</p></div>'
 
     html += '''</div></div></div>
+
         <div class="row mt-4">
-            <div class="col-12">
-                <div class="card bg-dark text-light">
+            <div class="col-lg-6">
+                <div class="card bg-dark text-light border-blue mb-4">
+                    <div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);">
+                        <h5 class="mb-0"><i class="bi bi-cloud-upload"></i> Sincronizar Juego a MongoDB</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="/sync" class="row g-2 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label text-info">ID</label>
+                                <input type="number" name="id" class="form-control bg-dark text-light border-secondary" placeholder="1" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-info">Nombre</label>
+                                <input type="text" name="nombre" class="form-control bg-dark text-light border-secondary" placeholder="Nombre" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-info">Genero</label>
+                                <input type="text" name="genero" class="form-control bg-dark text-light border-secondary" placeholder="Genero">
+                            </div>
+                            <div class="col-12 mt-2">
+                                <button type="submit" class="btn btn-primary-play w-100"><i class="bi bi-arrow-repeat"></i> Sincronizar Juego</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card bg-dark text-light border-blue mb-4">
                     <div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);">
                         <h5 class="mb-0"><i class="bi bi-link-45deg"></i> Accesos Rapidos</h5>
                     </div>
                     <div class="card-body">
-                        <div class="row g-2">
-                            <div class="col-md-4"><a href="/mejores" class="btn btn-outline-info w-100"><i class="bi bi-trophy"></i> Mejores (Vista)</a></div>
-                            <div class="col-md-4"><a href="/estadisticas?id=1" class="btn btn-outline-info w-100"><i class="bi bi-bar-chart"></i> Estadisticas (Vista)</a></div>
-                            <div class="col-md-4"><a href="/api/estadisticas?id=1" target="_blank" class="btn btn-outline-info w-100"><i class="bi bi-filetype-json"></i> Estadisticas (JSON)</a></div>
+                        <div class="d-grid gap-2">
+                            <a href="/mejores" class="btn btn-outline-info"><i class="bi bi-trophy"></i> Mejores Videojuegos</a>
+                            <a href="/estadisticas?id=1" class="btn btn-outline-info"><i class="bi bi-bar-chart"></i> Estadisticas (ejemplo id=1)</a>
+                            <a href="/api/mejores-videojuegos" target="_blank" class="btn btn-outline-secondary"><i class="bi bi-filetype-json"></i> Mejores (JSON)</a>
+                            <a href="/api/estadisticas?id=1" target="_blank" class="btn btn-outline-secondary"><i class="bi bi-filetype-json"></i> Estadisticas (JSON)</a>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card bg-dark text-light border-blue">
-                    <div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);">
-                        <h5 class="mb-0"><i class="bi bi-cloud-upload"></i> Sincronizar Juego a Analitica</h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted small">Si un juego no aparece en las estadisticas, registralo manualmente aqui con su ID y nombre.</p>
-                        <form method="POST" action="/sync" class="row g-2 align-items-end">
-                            <div class="col-md-3">
-                                <label class="form-label text-info">ID del Juego</label>
-                                <input type="number" name="id" class="form-control bg-dark text-light border-secondary" placeholder="Ej: 1" required>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label text-info">Nombre</label>
-                                <input type="text" name="nombre" class="form-control bg-dark text-light border-secondary" placeholder="Ej: God of War" required>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label text-info">Genero</label>
-                                <input type="text" name="genero" class="form-control bg-dark text-light border-secondary" placeholder="Ej: Accion">
-                            </div>
-                            <div class="col-md-2">
-                                <button type="submit" class="btn btn-primary-play w-100"><i class="bi bi-arrow-repeat"></i> Sincronizar</button>
-                            </div>
-                        </form>
                     </div>
                 </div>
             </div>
@@ -177,13 +182,25 @@ def index():
 
 
 @app.route('/api/videojuegos', methods=['GET', 'POST'])
-def registrar_videojuego():
+def api_videojuegos():
     if request.method == 'GET':
         if db is None:
-            return jsonify({'error': 'Servicio no disponible'}), 503
+            return jsonify({'error': 'Servicio no disponible'}), 503 if not es_navegador() else (HTML_HEADER + '<div class="alert alert-danger text-center py-5"><h4>Error de conexion</h4></div>' + HTML_FOOTER)
+
         videojuegos = list(db.videojuegos.find().sort('fecha_registro', -1))
         for v in videojuegos:
             v['_id'] = str(v['_id'])
+
+        if es_navegador():
+            html = HTML_HEADER + '''
+                <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/" class="text-info">Dashboard</a></li><li class="breadcrumb-item active text-light">Videojuegos (JSON)</li></ol></nav>
+                <div class="card bg-dark text-light"><div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);"><h5 class="mb-0">Videojuegos Registrados</h5></div>
+                <div class="card-body"><pre class="text-light mb-0" style="font-size:13px;">'''
+            import json
+            html += json.dumps(videojuegos, indent=2, ensure_ascii=False)
+            html += '</pre></div></div>'
+            return html + HTML_FOOTER
+
         return jsonify(videojuegos)
 
     if db is None:
@@ -214,7 +231,7 @@ def registrar_videojuego():
 
 
 @app.route('/api/estadisticas', methods=['GET'])
-def obtener_estadisticas():
+def api_estadisticas():
     if db is None:
         return jsonify({'error': 'Servicio no disponible'}), 503
 
@@ -224,6 +241,20 @@ def obtener_estadisticas():
 
     juego = db.videojuegos.find_one({'id_videojuego': id_videojuego})
     if not juego:
+        if es_navegador():
+            return HTML_HEADER + f'''
+                <div class="row justify-content-center mt-5">
+                    <div class="col-md-6">
+                        <div class="card bg-dark text-light text-center border-warning">
+                            <div class="card-body py-5">
+                                <i class="bi bi-emoji-frown fs-1 text-warning"></i>
+                                <h4 class="mt-3">Videojuego #{id_videojuego} no encontrado</h4>
+                                <p class="text-muted">Este juego no esta en MongoDB. Sincronizalo desde el Dashboard.</p>
+                                <a href="/" class="btn btn-primary-play btn-lg">Ir al Dashboard</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>''' + HTML_FOOTER
         return jsonify({'error': 'Videojuego no encontrado'}), 404
 
     pipeline = [
@@ -231,12 +262,24 @@ def obtener_estadisticas():
         {'$group': {'_id': '$id_videojuego', 'total_resenas': {'$sum': 1}, 'promedio': {'$avg': '$calificacion'}, 'mejor': {'$max': '$calificacion'}, 'peor': {'$min': '$calificacion'}}}
     ]
     resultado = list(db.reportes_resenas.aggregate(pipeline))
+    stats = resultado[0] if resultado else {'total_resenas': 0, 'promedio': 0, 'mejor': 0, 'peor': 0}
 
-    if resultado:
-        stats = resultado[0]
-        return jsonify({'id_videojuego': id_videojuego, 'nombre': juego.get('nombre', ''), 'genero': juego.get('genero', ''), 'total_resenas': stats['total_resenas'], 'promedio': round(stats['promedio'], 1), 'mejor_calificacion': stats['mejor'], 'peor_calificacion': stats['peor']})
+    if es_navegador():
+        import json
+        html = HTML_HEADER + f'''
+            <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/" class="text-info">Dashboard</a></li><li class="breadcrumb-item active text-light">Estadisticas (JSON)</li></ol></nav>
+            <div class="card bg-dark text-light"><div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);"><h5 class="mb-0">Estadisticas de: {juego.get('nombre', 'Desconocido')}</h5></div>
+            <div class="card-body"><pre class="text-light mb-0" style="font-size:13px;">'''
+        data = {'id_videojuego': id_videojuego, 'nombre': juego.get('nombre', ''), 'genero': juego.get('genero', ''), 'total_resenas': stats['total_resenas'], 'promedio': round(stats['promedio'], 1), 'mejor_calificacion': stats['mejor'], 'peor_calificacion': stats['peor']}
+        html += json.dumps(data, indent=2, ensure_ascii=False)
+        html += '</pre></div></div>'
+        return html + HTML_FOOTER
 
-    return jsonify({'id_videojuego': id_videojuego, 'nombre': juego.get('nombre', ''), 'genero': juego.get('genero', ''), 'total_resenas': 0, 'promedio': 0, 'mejor_calificacion': 0, 'peor_calificacion': 0})
+    return jsonify({
+        'id_videojuego': id_videojuego, 'nombre': juego.get('nombre', ''), 'genero': juego.get('genero', ''),
+        'total_resenas': stats['total_resenas'], 'promedio': round(stats['promedio'], 1),
+        'mejor_calificacion': stats['mejor'], 'peor_calificacion': stats['peor']
+    })
 
 
 @app.route('/estadisticas')
@@ -253,7 +296,7 @@ def pagina_estadisticas():
                         <div class="card-body py-5">
                             <i class="bi bi-question-circle fs-1 text-warning"></i>
                             <h4 class="mt-3">Especifica un ID de videojuego</h4>
-                            <p class="text-muted">Ejemplo: /estadisticas?id=7</p>
+                            <p class="text-muted">Ejemplo: /estadisticas?id=1</p>
                             <a href="/" class="btn btn-outline-light">Volver al Dashboard</a>
                         </div>
                     </div>
@@ -269,11 +312,8 @@ def pagina_estadisticas():
                         <div class="card-body py-5">
                             <i class="bi bi-emoji-frown fs-1 text-warning"></i>
                             <h4 class="mt-3">Videojuego #{id_videojuego} no encontrado</h4>
-                            <p class="text-muted">Este juego no esta registrado en el servicio de analitica. Registra juegos y reseñas desde la app principal:</p>
-                            <a href="https://gamehub-php2.onrender.com" target="_blank" class="btn btn-primary-play btn-lg">
-                                <i class="bi bi-controller"></i> Ir a GameHub App
-                            </a>
-                            <a href="/" class="btn btn-outline-light mt-2">Volver al Dashboard</a>
+                            <p class="text-muted">Sincronizalo desde el Dashboard con el formulario.</p>
+                            <a href="/" class="btn btn-primary-play btn-lg"><i class="bi bi-house"></i> Ir al Dashboard</a>
                         </div>
                     </div>
                 </div>
@@ -303,7 +343,7 @@ def pagina_estadisticas():
                     </div>
                     <div class="card-body">
                         <div class="row text-center g-3">
-                            <div class="col-3"><div class="p-3 rounded" style="background:#121a3a"><h2 class="text-info">{stats['total_resenas']}</h2><small>Reseñas</small></div></div>
+                            <div class="col-3"><div class="p-3 rounded" style="background:#121a3a"><h2 class="text-info">{stats['total_resenas']}</h2><small>Resenas</small></div></div>
                             <div class="col-3"><div class="p-3 rounded" style="background:#121a3a"><h2 class="text-info">{round(stats['promedio'],1)}</h2><small>Promedio</small></div></div>
                             <div class="col-3"><div class="p-3 rounded" style="background:#121a3a"><h2 class="text-success">{stats['mejor']}</h2><small>Mejor</small></div></div>
                             <div class="col-3"><div class="p-3 rounded" style="background:#121a3a"><h2 class="text-danger">{stats['peor']}</h2><small>Peor</small></div></div>
@@ -321,12 +361,14 @@ def pagina_estadisticas():
                         <p><strong>ID:</strong> {id_videojuego}</p>
                         <p><strong>Nombre:</strong> {juego['nombre']}</p>
                         <p><strong>Genero:</strong> {juego['genero']}</p>
+                        <hr>
+                        <p class="small text-muted">Las resenas se actualizan automaticamente desde la app principal.</p>
                     </div>
                 </div>
             </div>
         </div>
         <div class="card bg-dark text-light">
-            <div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);"><h5 class="mb-0"><i class="bi bi-chat-dots"></i> Ultimas Reseñas</h5></div>
+            <div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);"><h5 class="mb-0"><i class="bi bi-chat-dots"></i> Ultimas Resenas</h5></div>
             <div class="card-body p-0">
                 <table class="table table-dark table-striped mb-0">
                     <thead><tr><th>Usuario</th><th>Calificacion</th><th>Comentario</th><th>Fecha</th></tr></thead><tbody>'''
@@ -338,14 +380,14 @@ def pagina_estadisticas():
             fecha = r.get('fecha', '')[:10]
             html += f'''<tr><td>{r.get('nombre_usuario', 'Anonimo')}</td><td><span class="estrellas">{estrellas}</span></td><td>{comentario}</td><td>{fecha}</td></tr>'''
     else:
-        html += '<tr><td colspan="4" class="text-center text-muted py-3">Sin reseñas registradas</td></tr>'
+        html += '<tr><td colspan="4" class="text-center text-muted py-3"><i class="bi bi-inbox"></i> Sin resenas. Escribe una en la app principal.</td></tr>'
 
     html += '''</tbody></table></div></div>'''
     return html + HTML_FOOTER
 
 
 @app.route('/api/mejores-videojuegos', methods=['GET'])
-def mejores_videojuegos():
+def api_mejores():
     if db is None:
         return jsonify({'error': 'Servicio no disponible'}), 503
 
@@ -358,6 +400,17 @@ def mejores_videojuegos():
     for item in resultado:
         juego = db.videojuegos.find_one({'id_videojuego': item['_id']})
         top.append({'id_videojuego': item['_id'], 'nombre': juego['nombre'] if juego else 'Desconocido', 'genero': juego['genero'] if juego else '', 'total_resenas': item['total_resenas'], 'promedio': round(item['promedio'], 1)})
+
+    if es_navegador():
+        import json
+        html = HTML_HEADER + '''
+            <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/" class="text-info">Dashboard</a></li><li class="breadcrumb-item active text-light">Mejores (JSON)</li></ol></nav>
+            <div class="card bg-dark text-light"><div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);"><h5 class="mb-0">Mejores Videojuegos</h5></div>
+            <div class="card-body"><pre class="text-light mb-0" style="font-size:13px;">'''
+        html += json.dumps({'mejores_videojuegos': top}, indent=2, ensure_ascii=False)
+        html += '</pre></div></div>'
+        return html + HTML_FOOTER
+
     return jsonify({'mejores_videojuegos': top})
 
 
@@ -392,7 +445,7 @@ def pagina_mejores():
             </div>
             <div class="card-body p-0">
                 <table class="table table-dark table-striped mb-0">
-                    <thead><tr><th>#</th><th>Videojuego</th><th>Genero</th><th>Reseñas</th><th>Calificacion</th></tr></thead><tbody>'''
+                    <thead><tr><th>#</th><th>Videojuego</th><th>Genero</th><th>Resenas</th><th>Calificacion</th></tr></thead><tbody>'''
 
     if top:
         for i, t in enumerate(top):
@@ -400,32 +453,10 @@ def pagina_mejores():
             estrellas = ''.join(['<i class="bi bi-star-fill"></i>' if j <= round(t['promedio']) else '<i class="bi bi-star"></i>' for j in range(1, 6)])
             html += f'''<tr><td class="fs-5">{puesto}</td><td><strong>{t['nombre']}</strong></td><td><span class="badge bg-primary">{t['genero']}</span></td><td>{t['total_resenas']}</td><td><span class="estrellas">{estrellas}</span> <strong>{t['promedio']}</strong></td></tr>'''
     else:
-        html += '<tr><td colspan="5" class="text-center text-muted py-4">No hay datos. Registra reseñas en la app principal.</td></tr>'
+        html += '<tr><td colspan="5" class="text-center text-muted py-4"><i class="bi bi-inbox fs-1 d-block"></i>Sin reseñas. Escribe reseñas desde la app principal.</td></tr>'
 
     html += '''</tbody></table></div></div>'''
     return html + HTML_FOOTER
-
-
-@app.route('/api/calificar', methods=['POST'])
-def calificar_videojuego():
-    if db is None:
-        return jsonify({'error': 'Servicio no disponible'}), 503
-
-    datos = request.get_json(silent=True)
-    if not datos:
-        return jsonify({'error': 'Cuerpo JSON requerido'}), 400
-
-    id_videojuego = datos.get('id_videojuego')
-    calificacion = datos.get('calificacion')
-    comentario = datos.get('comentario', '')
-    id_usuario = datos.get('id_usuario', 0)
-    nombre_usuario = datos.get('nombre_usuario', '')
-
-    if not id_videojuego or not calificacion:
-        return jsonify({'error': 'Campos requeridos: id_videojuego, calificacion'}), 400
-
-    db.reportes_resenas.insert_one({'id_videojuego': int(id_videojuego), 'calificacion': int(calificacion), 'comentario': comentario, 'id_usuario': int(id_usuario), 'nombre_usuario': nombre_usuario, 'fecha': datetime.now().isoformat()})
-    return jsonify({'mensaje': 'Calificacion registrada en analitica', 'id_videojuego': id_videojuego}), 201
 
 
 @app.route('/sync', methods=['POST'])
@@ -464,6 +495,32 @@ def sync_juego():
                 </div>
             </div>
         </div>''' + HTML_FOOTER
+
+
+@app.route('/api/calificar', methods=['POST'])
+def calificar_videojuego():
+    if db is None:
+        return jsonify({'error': 'Servicio no disponible'}), 503
+
+    datos = request.get_json(silent=True)
+    if not datos:
+        return jsonify({'error': 'Cuerpo JSON requerido'}), 400
+
+    id_videojuego = datos.get('id_videojuego')
+    calificacion = datos.get('calificacion')
+    comentario = datos.get('comentario', '')
+    id_usuario = datos.get('id_usuario', 0)
+    nombre_usuario = datos.get('nombre_usuario', '')
+
+    if not id_videojuego or not calificacion:
+        return jsonify({'error': 'Campos requeridos: id_videojuego, calificacion'}), 400
+
+    db.reportes_resenas.insert_one({'id_videojuego': int(id_videojuego), 'calificacion': int(calificacion), 'comentario': comentario, 'id_usuario': int(id_usuario), 'nombre_usuario': nombre_usuario, 'fecha': datetime.now().isoformat()})
+
+    if not db.videojuegos.find_one({'id_videojuego': int(id_videojuego)}):
+        db.videojuegos.insert_one({'id_videojuego': int(id_videojuego), 'nombre': f'Juego #{id_videojuego}', 'genero': '', 'fecha_registro': datetime.now().isoformat()})
+
+    return jsonify({'mensaje': 'Calificacion registrada en analitica', 'id_videojuego': id_videojuego}), 201
 
 
 if __name__ == '__main__':
