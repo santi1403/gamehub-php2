@@ -121,7 +121,7 @@ def index():
                 <thead><tr><th>ID</th><th>Nombre</th><th>Genero</th><th>Accion</th></tr></thead><tbody>'''
         for v in videojuegos:
             html += f'''<tr><td>{v['id_videojuego']}</td><td>{v['nombre']}</td><td>{v['genero']}</td>
-                <td><a href="/api/estadisticas?id={v['id_videojuego']}" target="_blank" class="btn btn-sm btn-outline-info">Ver Stats</a></td></tr>'''
+                <td><a href="/estadisticas?id={v['id_videojuego']}" class="btn btn-sm btn-outline-info">Ver Stats</a></td></tr>'''
         html += '</tbody></table>'
     else:
         html += '<div class="p-4 text-center text-muted">No hay videojuegos registrados en analitica.</div>'
@@ -131,13 +131,13 @@ def index():
             <div class="col-12">
                 <div class="card bg-dark text-light">
                     <div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);">
-                        <h5 class="mb-0"><i class="bi bi-link-45deg"></i> Endpoints de la API</h5>
+                        <h5 class="mb-0"><i class="bi bi-link-45deg"></i> Accesos Rapidos</h5>
                     </div>
                     <div class="card-body">
                         <div class="row g-2">
-                            <div class="col-md-4"><a href="/api/mejores-videojuegos" target="_blank" class="btn btn-outline-info w-100"><i class="bi bi-trophy"></i> GET /api/mejores-videojuegos</a></div>
-                            <div class="col-md-4"><a href="/api/estadisticas?id=1" target="_blank" class="btn btn-outline-info w-100"><i class="bi bi-bar-chart"></i> GET /api/estadisticas?id=1</a></div>
-                            <div class="col-md-4"><span class="btn btn-outline-secondary w-100"><i class="bi bi-plus-circle"></i> POST /api/videojuegos</span></div>
+                            <div class="col-md-4"><a href="/mejores" class="btn btn-outline-info w-100"><i class="bi bi-trophy"></i> Mejores (Vista)</a></div>
+                            <div class="col-md-4"><a href="/estadisticas?id=1" class="btn btn-outline-info w-100"><i class="bi bi-bar-chart"></i> Estadisticas (Vista)</a></div>
+                            <div class="col-md-4"><a href="/api/estadisticas?id=1" target="_blank" class="btn btn-outline-info w-100"><i class="bi bi-filetype-json"></i> Estadisticas (JSON)</a></div>
                         </div>
                     </div>
                 </div>
@@ -210,6 +210,111 @@ def obtener_estadisticas():
     return jsonify({'id_videojuego': id_videojuego, 'nombre': juego.get('nombre', ''), 'genero': juego.get('genero', ''), 'total_resenas': 0, 'promedio': 0, 'mejor_calificacion': 0, 'peor_calificacion': 0})
 
 
+@app.route('/estadisticas')
+def pagina_estadisticas():
+    if db is None:
+        return HTML_HEADER + '<div class="alert alert-danger text-center py-5"><h4>Error de conexion a MongoDB</h4></div>' + HTML_FOOTER
+
+    id_videojuego = request.args.get('id', type=int)
+    if not id_videojuego:
+        return HTML_HEADER + '''
+            <div class="row justify-content-center mt-5">
+                <div class="col-md-6">
+                    <div class="card bg-dark text-light text-center border-warning">
+                        <div class="card-body py-5">
+                            <i class="bi bi-question-circle fs-1 text-warning"></i>
+                            <h4 class="mt-3">Especifica un ID de videojuego</h4>
+                            <p class="text-muted">Ejemplo: /estadisticas?id=7</p>
+                            <a href="/" class="btn btn-outline-light">Volver al Dashboard</a>
+                        </div>
+                    </div>
+                </div>
+            </div>''' + HTML_FOOTER
+
+    juego = db.videojuegos.find_one({'id_videojuego': id_videojuego})
+    if not juego:
+        return HTML_HEADER + f'''
+            <div class="row justify-content-center mt-5">
+                <div class="col-md-6">
+                    <div class="card bg-dark text-light text-center border-warning">
+                        <div class="card-body py-5">
+                            <i class="bi bi-emoji-frown fs-1 text-warning"></i>
+                            <h4 class="mt-3">Videojuego #{id_videojuego} no encontrado</h4>
+                            <p class="text-muted">Este juego no esta registrado en el servicio de analitica. Registra juegos y reseñas desde la app principal:</p>
+                            <a href="https://gamehub-php2.onrender.com" target="_blank" class="btn btn-primary-play btn-lg">
+                                <i class="bi bi-controller"></i> Ir a GameHub App
+                            </a>
+                            <a href="/" class="btn btn-outline-light mt-2">Volver al Dashboard</a>
+                        </div>
+                    </div>
+                </div>
+            </div>''' + HTML_FOOTER
+
+    pipeline = [
+        {'$match': {'id_videojuego': id_videojuego}},
+        {'$group': {'_id': '$id_videojuego', 'total_resenas': {'$sum': 1}, 'promedio': {'$avg': '$calificacion'}, 'mejor': {'$max': '$calificacion'}, 'peor': {'$min': '$calificacion'}}}
+    ]
+    resultado = list(db.reportes_resenas.aggregate(pipeline))
+    stats = resultado[0] if resultado else {'total_resenas': 0, 'promedio': 0, 'mejor': 0, 'peor': 0}
+
+    resenas = list(db.reportes_resenas.find({'id_videojuego': id_videojuego}).sort('fecha', -1).limit(20))
+    for r in resenas:
+        r['_id'] = str(r['_id'])
+
+    estrellas_promedio = ''.join(['<i class="bi bi-star-fill"></i>' if j <= round(stats['promedio']) else '<i class="bi bi-star"></i>' for j in range(1, 6)])
+
+    html = HTML_HEADER + f'''
+        <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/" class="text-info">Dashboard</a></li><li class="breadcrumb-item active text-light">Estadisticas</li></ol></nav>
+        <div class="row g-4 mb-4">
+            <div class="col-lg-8">
+                <div class="card bg-dark text-light">
+                    <div class="card-header d-flex justify-content-between align-items-center" style="background:linear-gradient(90deg,#003087,#0070CC);">
+                        <h4 class="mb-0"><i class="bi bi-controller"></i> {juego['nombre']}</h4>
+                        <span class="badge bg-primary fs-6">{juego['genero']}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center g-3">
+                            <div class="col-3"><div class="p-3 rounded" style="background:#121a3a"><h2 class="text-info">{stats['total_resenas']}</h2><small>Reseñas</small></div></div>
+                            <div class="col-3"><div class="p-3 rounded" style="background:#121a3a"><h2 class="text-info">{round(stats['promedio'],1)}</h2><small>Promedio</small></div></div>
+                            <div class="col-3"><div class="p-3 rounded" style="background:#121a3a"><h2 class="text-success">{stats['mejor']}</h2><small>Mejor</small></div></div>
+                            <div class="col-3"><div class="p-3 rounded" style="background:#121a3a"><h2 class="text-danger">{stats['peor']}</h2><small>Peor</small></div></div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <span class="estrellas fs-3">{estrellas_promedio}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card bg-dark text-light h-100">
+                    <div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);"><h5 class="mb-0"><i class="bi bi-info-circle"></i> Informacion</h5></div>
+                    <div class="card-body">
+                        <p><strong>ID:</strong> {id_videojuego}</p>
+                        <p><strong>Nombre:</strong> {juego['nombre']}</p>
+                        <p><strong>Genero:</strong> {juego['genero']}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card bg-dark text-light">
+            <div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);"><h5 class="mb-0"><i class="bi bi-chat-dots"></i> Ultimas Reseñas</h5></div>
+            <div class="card-body p-0">
+                <table class="table table-dark table-striped mb-0">
+                    <thead><tr><th>Usuario</th><th>Calificacion</th><th>Comentario</th><th>Fecha</th></tr></thead><tbody>'''
+
+    if resenas:
+        for r in resenas:
+            estrellas = ''.join(['<i class="bi bi-star-fill"></i>' if j <= r['calificacion'] else '<i class="bi bi-star"></i>' for j in range(1, 6)])
+            comentario = r.get('comentario', '')[:100] + ('...' if len(r.get('comentario', '')) > 100 else '')
+            fecha = r.get('fecha', '')[:10]
+            html += f'''<tr><td>{r.get('nombre_usuario', 'Anonimo')}</td><td><span class="estrellas">{estrellas}</span></td><td>{comentario}</td><td>{fecha}</td></tr>'''
+    else:
+        html += '<tr><td colspan="4" class="text-center text-muted py-3">Sin reseñas registradas</td></tr>'
+
+    html += '''</tbody></table></div></div>'''
+    return html + HTML_FOOTER
+
+
 @app.route('/api/mejores-videojuegos', methods=['GET'])
 def mejores_videojuegos():
     if db is None:
@@ -225,6 +330,51 @@ def mejores_videojuegos():
         juego = db.videojuegos.find_one({'id_videojuego': item['_id']})
         top.append({'id_videojuego': item['_id'], 'nombre': juego['nombre'] if juego else 'Desconocido', 'genero': juego['genero'] if juego else '', 'total_resenas': item['total_resenas'], 'promedio': round(item['promedio'], 1)})
     return jsonify({'mejores_videojuegos': top})
+
+
+@app.route('/mejores')
+def pagina_mejores():
+    if db is None:
+        return HTML_HEADER + '<div class="alert alert-danger text-center py-5"><h4>Error de conexion a MongoDB</h4></div>' + HTML_FOOTER
+
+    pipeline = [
+        {'$group': {'_id': '$id_videojuego', 'total_resenas': {'$sum': 1}, 'promedio': {'$avg': '$calificacion'}}},
+        {'$sort': {'promedio': -1}}, {'$limit': 10}
+    ]
+    resultado = list(db.reportes_resenas.aggregate(pipeline))
+    top = []
+    for item in resultado:
+        juego = db.videojuegos.find_one({'id_videojuego': item['_id']})
+        top.append({
+            'id_videojuego': item['_id'],
+            'nombre': juego['nombre'] if juego else 'Desconocido',
+            'genero': juego['genero'] if juego else '',
+            'total_resenas': item['total_resenas'],
+            'promedio': round(item['promedio'], 1)
+        })
+
+    trofeos = ['<i class="bi bi-trophy-fill text-warning"></i>', '<i class="bi bi-trophy-fill text-secondary"></i>', '<i class="bi bi-trophy-fill" style="color:#cd7f32;"></i>']
+
+    html = HTML_HEADER + '''
+        <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/" class="text-info">Dashboard</a></li><li class="breadcrumb-item active text-light">Mejores Videojuegos</li></ol></nav>
+        <div class="card bg-dark text-light">
+            <div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);">
+                <h4 class="mb-0"><i class="bi bi-trophy-fill text-warning"></i> Top 10 - Mejores Videojuegos</h4>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-dark table-striped mb-0">
+                    <thead><tr><th>#</th><th>Videojuego</th><th>Genero</th><th>Reseñas</th><th>Calificacion</th></tr></thead><tbody>'''
+
+    if top:
+        for i, t in enumerate(top):
+            puesto = trofeos[i] if i < 3 else str(i + 1)
+            estrellas = ''.join(['<i class="bi bi-star-fill"></i>' if j <= round(t['promedio']) else '<i class="bi bi-star"></i>' for j in range(1, 6)])
+            html += f'''<tr><td class="fs-5">{puesto}</td><td><strong>{t['nombre']}</strong></td><td><span class="badge bg-primary">{t['genero']}</span></td><td>{t['total_resenas']}</td><td><span class="estrellas">{estrellas}</span> <strong>{t['promedio']}</strong></td></tr>'''
+    else:
+        html += '<tr><td colspan="5" class="text-center text-muted py-4">No hay datos. Registra reseñas en la app principal.</td></tr>'
+
+    html += '''</tbody></table></div></div>'''
+    return html + HTML_FOOTER
 
 
 @app.route('/api/calificar', methods=['POST'])
