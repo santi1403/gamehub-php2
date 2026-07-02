@@ -22,4 +22,4 @@ COPY . /var/www/html/
 
 # Instalar dependencias PHP con Composer
 WORKDIR /var/www/html/web
-RUN composer install --no-interaction --no-dev
+RUN composer install --no-interaction --no-dev --ignore-platform-req=ext-mongodb

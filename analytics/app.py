@@ -6,19 +6,26 @@ from datetime import datetime
 import os
 
 app = Flask(__name__)
+mongo_error = None
 
 try:
-    cliente = MongoClient(Config.MONGO_URI)
+    cliente = MongoClient(Config.MONGO_URI, serverSelectionTimeoutMS=5000)
     db = cliente[Config.MONGO_DB]
     db.command('ping')
 except PyMongoError as e:
     db = None
+    mongo_error = str(e)
 
 
 @app.route('/')
 def index():
-    estado = 'conectado' if db is not None else 'error: sin conexion a MongoDB'
-    return jsonify({'servicio': 'GameHub - API de Analitica', 'estado': estado})
+    if db is not None:
+        return jsonify({'servicio': 'GameHub - API de Analitica', 'estado': 'conectado'})
+    return jsonify({
+        'servicio': 'GameHub - API de Analitica',
+        'estado': 'error: sin conexion a MongoDB',
+        'detalle': mongo_error
+    })
 
 
 @app.route('/api/videojuegos', methods=['POST'])
