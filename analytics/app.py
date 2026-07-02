@@ -174,9 +174,11 @@ def index():
                     <div class="card-body">
                         <div class="d-grid gap-2">
                             <a href="/mejores" class="btn btn-outline-info"><i class="bi bi-trophy"></i> Mejores Videojuegos</a>
-                            <a href="/estadisticas?id=1" class="btn btn-outline-info"><i class="bi bi-bar-chart"></i> Estadisticas (ejemplo id=1)</a>
+                            <form action="/estadisticas" method="GET" class="input-group">
+                                <input type="number" name="id" class="form-control bg-dark text-light border-secondary" placeholder="ID del juego" required>
+                                <button type="submit" class="btn btn-outline-info"><i class="bi bi-bar-chart"></i> Ver</button>
+                            </form>
                             <a href="/api/mejores-videojuegos" target="_blank" class="btn btn-outline-secondary"><i class="bi bi-filetype-json"></i> Mejores (JSON)</a>
-                            <a href="/api/estadisticas?id=1" target="_blank" class="btn btn-outline-secondary"><i class="bi bi-filetype-json"></i> Estadisticas (JSON)</a>
                         </div>
                     </div>
                 </div>
