@@ -142,6 +142,35 @@ def index():
                     </div>
                 </div>
             </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card bg-dark text-light border-blue">
+                    <div class="card-header" style="background:linear-gradient(90deg,#003087,#0070CC);">
+                        <h5 class="mb-0"><i class="bi bi-cloud-upload"></i> Sincronizar Juego a Analitica</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small">Si un juego no aparece en las estadisticas, registralo manualmente aqui con su ID y nombre.</p>
+                        <form method="POST" action="/sync" class="row g-2 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label text-info">ID del Juego</label>
+                                <input type="number" name="id" class="form-control bg-dark text-light border-secondary" placeholder="Ej: 1" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-info">Nombre</label>
+                                <input type="text" name="nombre" class="form-control bg-dark text-light border-secondary" placeholder="Ej: God of War" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label text-info">Genero</label>
+                                <input type="text" name="genero" class="form-control bg-dark text-light border-secondary" placeholder="Ej: Accion">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary-play w-100"><i class="bi bi-arrow-repeat"></i> Sincronizar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>'''
 
     return html + HTML_FOOTER
@@ -397,6 +426,44 @@ def calificar_videojuego():
 
     db.reportes_resenas.insert_one({'id_videojuego': int(id_videojuego), 'calificacion': int(calificacion), 'comentario': comentario, 'id_usuario': int(id_usuario), 'nombre_usuario': nombre_usuario, 'fecha': datetime.now().isoformat()})
     return jsonify({'mensaje': 'Calificacion registrada en analitica', 'id_videojuego': id_videojuego}), 201
+
+
+@app.route('/sync', methods=['POST'])
+def sync_juego():
+    if db is None:
+        return HTML_HEADER + '<div class="alert alert-danger text-center py-5"><h4>Error de conexion a MongoDB</h4></div>' + HTML_FOOTER
+
+    id_juego = request.form.get('id', type=int)
+    nombre = request.form.get('nombre', '')
+    genero = request.form.get('genero', '')
+
+    if not id_juego or not nombre:
+        return HTML_HEADER + '<div class="alert alert-warning text-center py-5"><h4>ID y Nombre son obligatorios</h4><a href="/" class="btn btn-outline-light">Volver</a></div>' + HTML_FOOTER
+
+    existente = db.videojuegos.find_one({'id_videojuego': id_juego})
+    if existente:
+        db.videojuegos.update_one({'id_videojuego': id_juego}, {'$set': {'nombre': nombre, 'genero': genero}})
+        msg = 'actualizado'
+    else:
+        db.videojuegos.insert_one({'id_videojuego': id_juego, 'nombre': nombre, 'genero': genero, 'fecha_registro': datetime.now().isoformat()})
+        msg = 'registrado'
+
+    return HTML_HEADER + f'''
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-6">
+                <div class="card bg-dark text-light text-center border-success">
+                    <div class="card-body py-5">
+                        <i class="bi bi-check-circle-fill fs-1 text-success"></i>
+                        <h4 class="mt-3">Juego {msg} correctamente</h4>
+                        <p><strong>{nombre}</strong> (ID: {id_juego}) - {genero}</p>
+                        <a href="/estadisticas?id={id_juego}" class="btn btn-primary-play btn-lg">
+                            <i class="bi bi-bar-chart"></i> Ver Estadisticas
+                        </a>
+                        <a href="/" class="btn btn-outline-light mt-2">Volver al Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        </div>''' + HTML_FOOTER
 
 
 if __name__ == '__main__':
