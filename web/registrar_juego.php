@@ -1,6 +1,6 @@
 <?php
 require_once 'db.php';
-require_once 'mongo_config.php';
+require_once 'api_config.php';
 include 'header.php';
 
 $errores = [];
@@ -80,15 +80,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
             $id_juego = $pdo->lastInsertId();
 
-            try {
-                if ($mongo_collection) {
-                    $mongo_db->selectCollection('videojuegos')->insertOne([
-                        'id_videojuego' => (int) $id_juego,
-                        'nombre' => $titulo,
-                        'genero' => $genero
-                    ]);
-                }
-            } catch (Exception $e) {}
+            $ch = curl_init($api_analitica_url . '/api/videojuegos');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+                'id' => (int) $id_juego,
+                'nombre' => $titulo,
+                'genero' => $genero
+            ]));
+            curl_exec($ch);
+            curl_close($ch);
 
             $exito = 'Videojuego "' . htmlspecialchars($titulo) . '" registrado exitosamente.';
             $valores = ['titulo' => '', 'genero' => '', 'plataforma' => '', 'descripcion' => '', 'precio' => '', 'anio_lanzamiento' => ''];

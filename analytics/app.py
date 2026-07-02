@@ -151,6 +151,36 @@ def mejores_videojuegos():
     return jsonify({'mejores_videojuegos': top})
 
 
+@app.route('/api/calificar', methods=['POST'])
+def calificar_videojuego():
+    if db is None:
+        return jsonify({'error': 'Servicio no disponible'}), 503
+
+    datos = request.get_json(silent=True)
+    if not datos:
+        return jsonify({'error': 'Cuerpo JSON requerido'}), 400
+
+    id_videojuego = datos.get('id_videojuego')
+    calificacion = datos.get('calificacion')
+    comentario = datos.get('comentario', '')
+    id_usuario = datos.get('id_usuario', 0)
+    nombre_usuario = datos.get('nombre_usuario', '')
+
+    if not id_videojuego or not calificacion:
+        return jsonify({'error': 'Campos requeridos: id_videojuego, calificacion'}), 400
+
+    db.reportes_resenas.insert_one({
+        'id_videojuego': int(id_videojuego),
+        'calificacion': int(calificacion),
+        'comentario': comentario,
+        'id_usuario': int(id_usuario),
+        'nombre_usuario': nombre_usuario,
+        'fecha': datetime.now().isoformat()
+    })
+
+    return jsonify({'mensaje': 'Calificacion registrada en analitica', 'id_videojuego': id_videojuego}), 201
+
+
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
