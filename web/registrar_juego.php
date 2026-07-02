@@ -1,5 +1,6 @@
 <?php
 require_once 'db.php';
+require_once 'mongo_config.php';
 include 'header.php';
 
 $errores = [];
@@ -77,6 +78,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':precio' => $precio,
                 ':anio' => $anio_int
             ]);
+            $id_juego = $pdo->lastInsertId();
+
+            try {
+                if ($mongo_collection) {
+                    $mongo_db->selectCollection('videojuegos')->insertOne([
+                        'id_videojuego' => (int) $id_juego,
+                        'nombre' => $titulo,
+                        'genero' => $genero
+                    ]);
+                }
+            } catch (Exception $e) {}
+
             $exito = 'Videojuego "' . htmlspecialchars($titulo) . '" registrado exitosamente.';
             $valores = ['titulo' => '', 'genero' => '', 'plataforma' => '', 'descripcion' => '', 'precio' => '', 'anio_lanzamiento' => ''];
         } catch (PDOException $e) {
