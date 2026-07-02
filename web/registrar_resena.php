@@ -1,5 +1,6 @@
 <?php
 require_once 'db.php';
+require_once 'mongo_config.php';
 include 'header.php';
 
 $errores = [];
@@ -60,6 +61,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $pdo->prepare("SELECT titulo FROM videojuegos WHERE id = ?");
                 $stmt->execute([$videojuego_id]);
                 $juego = $stmt->fetch();
+
+                try {
+                    if ($mongo_collection) {
+                        $mongo_collection->insertOne([
+                            'id_usuario' => (int) $_SESSION['usuario_id'],
+                            'nombre_usuario' => $_SESSION['usuario_nombre'],
+                            'id_videojuego' => (int) $videojuego_id,
+                            'titulo_juego' => $juego['titulo'],
+                            'calificacion' => (int) $cal,
+                            'comentario' => $comentario,
+                            'fecha' => date('Y-m-d H:i:s')
+                        ]);
+                    }
+                } catch (Exception $e) {}
 
                 $exito = 'Resena publicada correctamente.';
                 $valores = ['videojuego_id' => '', 'calificacion' => '', 'comentario' => ''];
