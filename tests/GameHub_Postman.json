@@ -1,0 +1,58 @@
+{
+	"info": {
+		"name": "GameHub - Pruebas de Integracion PHP-Python",
+		"description": "Coleccion de pruebas para verificar la comunicacion entre la app PHP, la API Flask y MongoDB Atlas.\n\nPunto 16 del plan de mejoramiento.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Registrar Videojuego (PHP -> Flask)",
+			"request": {
+				"method": "POST",
+				"url": "https://gamehub-analytics-api-t87e.onrender.com/api/videojuegos",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"id\": 1,\n    \"nombre\": \"FIFA 26\",\n    \"genero\": \"Deportes\"\n}"
+				}
+			}
+		},
+		{
+			"name": "2. Registrar Reseña (PHP -> Flask)",
+			"request": {
+				"method": "POST",
+				"url": "https://gamehub-analytics-api-t87e.onrender.com/api/calificar",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"id_videojuego\": 1,\n    \"calificacion\": 5,\n    \"comentario\": \"Excelente juego, muy recomendado\",\n    \"id_usuario\": 1,\n    \"nombre_usuario\": \"Santiago\"\n}"
+				}
+			}
+		},
+		{
+			"name": "3. Consultar Estadisticas (Flask -> MongoDB)",
+			"request": {
+				"method": "GET",
+				"url": "https://gamehub-analytics-api-t87e.onrender.com/api/estadisticas?id=1"
+			}
+		},
+		{
+			"name": "4. Consultar Mejores Videojuegos (Flask -> MongoDB)",
+			"request": {
+				"method": "GET",
+				"url": "https://gamehub-analytics-api-t87e.onrender.com/api/mejores-videojuegos"
+			}
+		},
+		{
+			"name": "5. Estado del Servicio (Health Check)",
+			"request": {
+				"method": "GET",
+				"url": "https://gamehub-analytics-api-t87e.onrender.com/"
+			}
+		}
+	]
+}

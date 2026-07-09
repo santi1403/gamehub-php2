@@ -28,6 +28,11 @@ session_start();
                     <li class="nav-item">
                         <a class="nav-link" href="registrar_juego.php"><i class="bi bi-plus-circle"></i> Registrar Juego</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-warning fw-bold" href="https://gamehub-analytics-api-t87e.onrender.com" target="_blank">
+                            <i class="bi bi-graph-up"></i> Ver Analitica
+                        </a>
+                    </li>
                     <?php if (isset($_SESSION['usuario_id'])): ?>
                         <li class="nav-item">
                             <span class="nav-link text-info">
